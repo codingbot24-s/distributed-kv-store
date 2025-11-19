@@ -1,6 +1,8 @@
 package main
 
-import storage "github.com/codingbot24-s/distributed-kv-store/internal"
+import (
+	storage "github.com/codingbot24-s/distributed-kv-store/internal"
+)
 
 func main() {
 	w, err := storage.NewWal("Wal.log")
@@ -11,4 +13,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	w.Close()
 }

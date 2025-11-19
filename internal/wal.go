@@ -2,6 +2,7 @@ package storage
 
 import (
 	"fmt"
+	"hash/crc32"
 	"os"
 )
 
@@ -17,15 +18,19 @@ func NewWal(path string) (*Wal, error) {
 
 	return &Wal{f: f}, nil
 }
-func (w *Wal) Close() {
+func (w *Wal) Close() error {
 	err := w.f.Close()
 	if err != nil {
-		fmt.Printf("error closing the file: %v", err)
+		return fmt.Errorf("error closing the file: %w", err)
 	}
+
+	return nil
 }
 
 func (w *Wal) Append(data []byte) error {
-	_, err := w.f.Write(data)
+	sum := crc32.Checksum(data, crc32.IEEETable)
+	line := fmt.Sprintf("[length: %d] [checksum: %d] [paylaod: %s] \n", len(data), sum, string(data))
+	_, err := w.f.Write([]byte(line))
 	if err != nil {
 		return fmt.Errorf("error writing to the file: %w", err)
 	}
