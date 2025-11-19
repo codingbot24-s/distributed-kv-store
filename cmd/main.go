@@ -9,10 +9,11 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	err = w.Append([]byte("hello wal"))
-	if err != nil {
-		panic(err)
-	}
+	//err = w.Append([]byte("hello wal"))
+	//if err != nil {
+	//	panic(err)
+	//}
 
+	w.Read()
 	w.Close()
 }

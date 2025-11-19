@@ -1,8 +1,11 @@
 package storage
 
 import (
+	"bufio"
+	"bytes"
 	"fmt"
 	"hash/crc32"
+	"io"
 	"os"
 )
 
@@ -37,6 +40,27 @@ func (w *Wal) Append(data []byte) error {
 	err = w.f.Sync()
 	if err != nil {
 		return fmt.Errorf("error syncing the file: %w", err)
+	}
+
+	return nil
+}
+
+type Oneline struct {
+	Length  int32
+	sum     int32
+	Payload string
+}
+
+func (w *Wal) Read() error {
+	if _, err := w.f.Seek(0, io.SeekStart); err != nil {
+		return fmt.Errorf("error seeking the file: %w", err)
+	}
+	scanner := bufio.NewScanner(w.f)
+	for scanner.Scan() {
+		line := scanner.Bytes()
+		_ = bytes.TrimSpace(line)
+		//TODO: how can we get the checksum
+
 	}
 
 	return nil
