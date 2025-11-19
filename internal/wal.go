@@ -2,11 +2,12 @@ package storage
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
 	"hash/crc32"
 	"io"
 	"os"
+	"regexp"
+	"strconv"
 )
 
 type Wal struct {
@@ -31,7 +32,7 @@ func (w *Wal) Close() error {
 }
 
 func (w *Wal) Append(data []byte) error {
-	sum := crc32.Checksum(data, crc32.IEEETable)
+	sum := crc32.Checksum(data, crc32.MakeTable(crc32.Castagnoli))
 	line := fmt.Sprintf("[length: %d] [checksum: %d] [paylaod: %s] \n", len(data), sum, string(data))
 	_, err := w.f.Write([]byte(line))
 	if err != nil {
@@ -45,23 +46,66 @@ func (w *Wal) Append(data []byte) error {
 	return nil
 }
 
-type Oneline struct {
-	Length  int32
-	sum     int32
-	Payload string
-}
-
-func (w *Wal) Read() error {
-	if _, err := w.f.Seek(0, io.SeekStart); err != nil {
-		return fmt.Errorf("error seeking the file: %w", err)
+func (w *Wal) Read() ([][]byte,error){
+	if w.f == nil {
+		return nil,fmt.Errorf("the file is not initialized")
 	}
-	scanner := bufio.NewScanner(w.f)
-	for scanner.Scan() {
-		line := scanner.Bytes()
-		_ = bytes.TrimSpace(line)
-		//TODO: how can we get the checksum
+	reader := bufio.NewReader(w.f)
 
+	_, err := w.f.Seek(0, 0)
+	if err != nil {
+		return nil,fmt.Errorf("error seeking file: %w", err)
 	}
 
-	return nil
+	// Compile regex once, not on every iteration
+	re := regexp.MustCompile(`\[length: (\d+)\] \[checksum: (\d+)\] \[paylaod: (.*?)\]`)
+	lineSlice := make([][]byte,0)
+	for {
+		bline, err := reader.ReadBytes('\n')
+		if err != nil && err != io.EOF {
+			return nil, fmt.Errorf("error reading file: %w", err)
+		}
+		if err == io.EOF {
+			break
+		}
+
+		line := string(bline)
+		matches := re.FindStringSubmatch(line)
+
+		if len(matches) != 4 {
+			return nil, fmt.Errorf("invalid log format: %s", line)
+		}
+
+		length, err := strconv.Atoi(matches[1])
+		if err != nil {
+			return nil, fmt.Errorf("invalid length value: %s", matches[1])
+		}
+
+		storedChecksum, err := strconv.ParseUint(matches[2], 10, 32)
+		if err != nil {
+			return nil, fmt.Errorf("invalid checksum value: %s", matches[2])
+		}
+
+		payload := matches[3]
+
+		// compute new checksum
+		computedChecksum := crc32.Checksum([]byte(payload), crc32.MakeTable(crc32.Castagnoli))
+
+		// check
+		if computedChecksum != uint32(storedChecksum) {
+			return nil, fmt.Errorf("checksum mismatch for payload '%s': expected %d, got %d",
+				payload, storedChecksum, computedChecksum)
+		}
+
+		if len(payload) != length {
+			return nil, fmt.Errorf("length mismatch for payload '%s': expected %d, got %d",
+				payload, length, len(payload))
+		}
+
+		fmt.Printf(" Verified: [length: %d] [checksum: %d] [payload: %s]\n", length, computedChecksum, payload)
+
+		lineSlice = append(lineSlice,bline )
+	}
+
+	return lineSlice,nil
 }
