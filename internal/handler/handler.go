@@ -68,7 +68,7 @@ func Delete(c *fiber.Ctx) error {
 			"detail": "error getting engine",
 		})
 	}
-	_,ok := e.Get(key)
+	_, ok := e.Get(key)
 	if !ok {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"error":  err,
@@ -82,7 +82,7 @@ func Delete(c *fiber.Ctx) error {
 	})
 }
 
-func Health (c *fiber.Ctx) error {
-	c.Status(200).SendString("OK")	
+func Health(c *fiber.Ctx) error {
+	c.Status(200).SendString("OK")
 	return nil
 }
