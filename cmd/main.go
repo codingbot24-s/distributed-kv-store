@@ -11,7 +11,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	_ = helper.NewEngine()
+	e := helper.NewEngine()
 	// read all the entry from file
 	entries, err := w.Read()
 	if err != nil {
@@ -24,9 +24,17 @@ func main() {
 	for _, entry := range entries {
 		// 1.entry will be in the byte so we need to decode it
 		// 2. and get back the state for engine
-		//TODO: is there a better way to get the command structer
+		//TODO: is there a better way to get the command struct
 		d := entry[46 : len(entry)-3]
 		fmt.Println(string(d))
+		c, err := helper.DecodeCommand(d)
+		if err != nil {
+			panic(err)
+		}
+		if err := e.Apply(c); err != nil {
+			panic(err)
+		}
+		e.Check()
 	}
 	//c := helper.Command{
 	//	OP:    "set",
