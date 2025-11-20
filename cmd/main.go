@@ -17,6 +17,17 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	// startup phase we need to read the wal file and make the
+	// engine state from it
+	// TODO: we are correctly getting the all the entries just need to make the entry include
+	// state from it with commands and key value
+	for _, entry := range entries {
+		// 1.entry will be in the byte so we need to decode it
+		// 2. and get back the state for engine
+		//TODO: is there a better way to get the command structer
+		d := entry[46 : len(entry)-3]
+		fmt.Println(string(d))
+	}
 	//c := helper.Command{
 	//	OP:    "set",
 	//	Key:   "key",
@@ -26,13 +37,5 @@ func main() {
 	//if err != nil {
 	//	panic(err)
 	//}
-	// in the startup phase we need to read the wal file and get the
-	// state back
-	// startup phase
-	for _, entry := range entries {
-		// 1.entry will be in the byte so we need to decode it
-		// 2. and get back the state for engine
-		fmt.Println(string(entry))
-	}
 
 }

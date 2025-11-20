@@ -28,8 +28,16 @@ func ApplyCommand(w *Wal, e *Engine, cmd *Command) error {
 	if err != nil {
 		return fmt.Errorf("error decoding command: %w", err)
 	}
-	// set in the memory
-	e.set(c.Key, c.Value)
+	switch c.OP {
+	case "set":
+		e.set(c.Key, c.Value)
+	case "get":
+		e.get(c.Key)
+	case "del":
+		e.delete(c.Key)
+	default:
+		return fmt.Errorf("unknown command: %s", c.OP)
+	}
 	return nil
 }
 
@@ -39,4 +47,13 @@ func encode(cmd *Command) ([]byte, error) {
 		return nil, fmt.Errorf("error marshaling in the json byte %w", err)
 	}
 	return jsonByte, nil
+}
+
+func DecodeCommand(data []byte) (*Command, error) {
+	var cmd Command
+	err := json.Unmarshal(data, &cmd)
+	if err != nil {
+		return nil, fmt.Errorf("error decoding the command: %w", err)
+	}
+	return &cmd, nil
 }

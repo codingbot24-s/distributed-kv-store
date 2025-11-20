@@ -46,20 +46,23 @@ func (w *Wal) Append(data []byte) error {
 	return nil
 }
 
-func (w *Wal) Read() ([][]byte,error){
+// do we need to return whole entry can we just return the payload and make
+// TODO: before read would return the whole entry but now it is returning just the command
+// not len and sum
+func (w *Wal) Read() ([][]byte, error) {
 	if w.f == nil {
-		return nil,fmt.Errorf("the file is not initialized")
+		return nil, fmt.Errorf("the file is not initialized")
 	}
 	reader := bufio.NewReader(w.f)
 
 	_, err := w.f.Seek(0, 0)
 	if err != nil {
-		return nil,fmt.Errorf("error seeking file: %w", err)
+		return nil, fmt.Errorf("error seeking file: %w", err)
 	}
 
 	// Compile regex once, not on every iteration
 	re := regexp.MustCompile(`\[length: (\d+)\] \[checksum: (\d+)\] \[paylaod: (.*?)\]`)
-	lineSlice := make([][]byte,0)
+	lineSlice := make([][]byte, 0)
 	for {
 		bline, err := reader.ReadBytes('\n')
 		if err != nil && err != io.EOF {
@@ -104,8 +107,8 @@ func (w *Wal) Read() ([][]byte,error){
 
 		fmt.Printf(" Verified: [length: %d] [checksum: %d] [payload: %s]\n", length, computedChecksum, payload)
 
-		lineSlice = append(lineSlice,bline )
+		lineSlice = append(lineSlice, bline)
 	}
 
-	return lineSlice,nil
+	return lineSlice, nil
 }
