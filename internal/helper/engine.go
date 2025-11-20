@@ -28,7 +28,7 @@ func GetEngine() (*Engine, error) {
 func (e *Engine) set(key, value string) {
 	e.Data[key] = value
 }
-func (e *Engine) get(key string) (string, bool) {
+func (e *Engine) Get(key string) (string, bool) {
 	value, ok := e.Data[key]
 	if !ok {
 		return "", false

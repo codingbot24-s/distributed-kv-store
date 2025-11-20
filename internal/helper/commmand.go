@@ -44,10 +44,6 @@ func ApplyCommand(cmd *Command) error {
 	switch c.OP {
 	case "set":
 		e.set(c.Key, c.Value)
-	case "get":
-		e.get(c.Key)
-	case "del":
-		e.delete(c.Key)
 	default:
 		return fmt.Errorf("unknown command: %s", c.OP)
 	}

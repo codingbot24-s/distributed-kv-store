@@ -37,5 +37,26 @@ func Set(c *fiber.Ctx) error {
 		"value":   s.Value,
 	})
 }
-func Get()    {}
+func Get(c *fiber.Ctx) error {
+	key := c.Query("key")
+	e, err := helper.GetEngine()
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error":  err,
+			"detail": "error getting engine",
+		})
+	}
+	res, ok := e.Get(key)
+	if !ok {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error":  err,
+			"detail": "key not found",
+		})
+	}
+	return c.JSON(fiber.Map{
+		"success": true,
+		"key":     key,
+		"value":   res,
+	})
+}
 func Delete() {}
