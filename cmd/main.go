@@ -4,19 +4,21 @@ import (
 	"log"
 
 	"github.com/codingbot24-s/distributed-kv-store/internal/helper"
+	"github.com/codingbot24-s/distributed-kv-store/internal/router"
 )
 
 func main() {
-	w, err := helper.NewWal("Wal.log")
+	err := helper.NewWal("Wal.log")
 	if err != nil {
 		log.Fatalf("error creating wal: %v", err)
 	}
-	e := helper.NewEngine()
+	helper.NewEngine()
 	// start the read
-	err = helper.BuildState(w, e)
+	err = helper.BuildState()
 	if err != nil {
 		log.Fatalf("error building state: %v", err)
 	}
+	router.StartRouter()
 
 	//c := helper.Command{
 	//	OP:    "set",

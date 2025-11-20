@@ -14,14 +14,25 @@ type Wal struct {
 	f *os.File
 }
 
-func NewWal(path string) (*Wal, error) {
+var defaultWal *Wal
+
+func NewWal(path string) error {
 	f, err := os.OpenFile(path, os.O_APPEND|os.O_RDWR|os.O_CREATE, 0644)
 	if err != nil {
-		return nil, fmt.Errorf("error opening the file: %w", err)
+		return fmt.Errorf("error opening the file: %w", err)
 	}
-
-	return &Wal{f: f}, nil
+	// store the created WAL in the package-level variable so GetWal can return it
+	defaultWal = &Wal{f: f}
+	return nil
 }
+
+func GetWal() (*Wal, error) {
+	if defaultWal == nil {
+		return nil, fmt.Errorf("wal is not initialized")
+	}
+	return defaultWal, nil
+}
+
 func (w *Wal) Close() error {
 	err := w.f.Close()
 	if err != nil {

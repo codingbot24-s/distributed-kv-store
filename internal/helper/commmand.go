@@ -11,13 +11,22 @@ type Command struct {
 	Value string
 }
 
-func ApplyCommand(w *Wal, e *Engine, cmd *Command) error {
-	// encode the command in json
+func NewCommand() *Command {
+	return &Command{}
+}
+
+// handler will call with command and this will append to the file
+func ApplyCommand(cmd *Command) error {
+	// encode the command in jsonByte
 	b, err := encode(cmd)
 	if err != nil {
 		return fmt.Errorf("error encoding command: %w", err)
 	}
 	// will append the bytes into the wal file
+	w, err := GetWal()
+	if err != nil {
+		return fmt.Errorf("error getting wal: %w", err)
+	}
 	err = w.Append(b)
 	if err != nil {
 		return fmt.Errorf("error appending into the file: %w", err)
@@ -27,6 +36,10 @@ func ApplyCommand(w *Wal, e *Engine, cmd *Command) error {
 	err = json.Unmarshal(b, &c)
 	if err != nil {
 		return fmt.Errorf("error decoding command: %w", err)
+	}
+	e, err := GetEngine()
+	if err != nil {
+		return fmt.Errorf("error getting engine: %w", err)
 	}
 	switch c.OP {
 	case "set":

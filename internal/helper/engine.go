@@ -1,6 +1,7 @@
 package helper
 
 import (
+	"errors"
 	"fmt"
 )
 
@@ -8,10 +9,20 @@ type Engine struct {
 	Data map[string]string
 }
 
-func NewEngine() *Engine {
-	return &Engine{
+var DefaultEngine *Engine
+
+func NewEngine() {
+	DefaultEngine = &Engine{
 		Data: make(map[string]string),
 	}
+}
+
+func GetEngine() (*Engine, error) {
+	if DefaultEngine.Data == nil {
+		return nil, errors.New("engine data is empty call the new engine")
+	}
+
+	return DefaultEngine, nil
 }
 
 func (e *Engine) set(key, value string) {

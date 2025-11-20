@@ -2,7 +2,15 @@ package helper
 
 import "fmt"
 
-func BuildState(w *Wal, e *Engine) error {
+func BuildState() error {
+	w, err := GetWal()
+	if err != nil {
+		return fmt.Errorf("error getting wal: %v", err)
+	}
+	e, err := GetEngine()
+	if err != nil {
+		return fmt.Errorf("error getting engine: %v", err)
+	}
 	entries, err := w.Read()
 	if err != nil {
 		return fmt.Errorf("error in reading wal %w", err)
