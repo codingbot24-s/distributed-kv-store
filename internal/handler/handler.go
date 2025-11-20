@@ -81,3 +81,8 @@ func Delete(c *fiber.Ctx) error {
 		"key":     key,
 	})
 }
+
+func Health (c *fiber.Ctx) error {
+	c.Status(200).SendString("OK")	
+	return nil
+}
