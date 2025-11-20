@@ -16,8 +16,7 @@ func BuildState() error {
 		return fmt.Errorf("error in reading wal %w", err)
 	}
 	for _, entry := range entries {
-		// 1.entry will be in the byte so we need to decode it
-		// 2. and get back the state for engine
+		
 		//TODO: is there a better way to get the command struct
 		d := entry[46 : len(entry)-3]
 		fmt.Println(string(d))

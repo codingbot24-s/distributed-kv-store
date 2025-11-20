@@ -35,7 +35,7 @@ func (e *Engine) Get(key string) (string, bool) {
 	}
 	return value, true
 }
-func (e *Engine) delete(key string) {
+func (e *Engine) Delete(key string) {
 	delete(e.Data, key)
 }
 
@@ -48,7 +48,7 @@ func (e *Engine) Apply(cmd *Command) error {
 	case "get":
 		fmt.Println("key is and value is value", c.Key, c.Value)
 	case "delete":
-		e.delete(c.Key)
+		e.Delete(c.Key)
 	default:
 		return fmt.Errorf("unknown command: %s", c.OP)
 	}

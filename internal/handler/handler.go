@@ -59,4 +59,25 @@ func Get(c *fiber.Ctx) error {
 		"value":   res,
 	})
 }
-func Delete() {}
+func Delete(c *fiber.Ctx) error {
+	key := c.Query("key")
+	e, err := helper.GetEngine()
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error":  err,
+			"detail": "error getting engine",
+		})
+	}
+	_,ok := e.Get(key)
+	if !ok {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error":  err,
+			"detail": "key not found so cannot delete",
+		})
+	}
+	e.Delete(key)
+	return c.JSON(fiber.Map{
+		"success": true,
+		"key":     key,
+	})
+}
