@@ -86,3 +86,24 @@ func Health(c *fiber.Ctx) error {
 	c.Status(200).SendString("OK")
 	return nil
 }
+// RAFT ENDPOINT
+
+type AppendReuest struct {
+	Term 	   int
+	LeaderID   string
+	PrevLogIdx int
+	PrevLogTerm int
+	Entries    []helper.Command
+	LeaderCommit int
+}
+type AppendResponse struct {
+	Term    int
+	Success bool
+}
+func Append (c *fiber.Ctx) error {
+	return nil
+}
+
+func Vote (c *fiber.Ctx) error {
+	return nil
+}
