@@ -3,6 +3,7 @@ package config
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 )
 
@@ -30,6 +31,11 @@ func LoadConfig(path string) (*Cluster, error) {
 	return &c, nil
 }
 
-func (c *Cluster) CreatePeer() {
-	
+func (c *Cluster) CreatePeer() map[string]*http.Client {
+	peerClients := make(map[string]*http.Client)
+	for _, peer := range c.Peers {
+		peerClients[peer.NodeId] = new(http.Client)
+	}
+
+	return peerClients
 }
