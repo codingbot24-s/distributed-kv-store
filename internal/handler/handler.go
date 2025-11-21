@@ -87,7 +87,7 @@ func Health(c *fiber.Ctx) error {
 	return nil
 }
 // RAFT ENDPOINT
-
+// rafht append request 
 type AppendReuest struct {
 	Term 	   int
 	LeaderID   string
