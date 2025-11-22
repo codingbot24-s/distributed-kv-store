@@ -14,10 +14,10 @@ func main() {
 	}
 	helper.NewEngine()
 	// start the read
-	err = helper.BuildState()
-	if err != nil {
-		log.Fatalf("error building state: %v", err)
-	}
+	//err = helper.BuildState()
+	//if err != nil {
+	//	log.Fatalf("error building state: %v", err)
+	//}
 	router.StartRouter()
 
 	//c := helper.Command{

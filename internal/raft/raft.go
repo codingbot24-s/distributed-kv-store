@@ -9,11 +9,23 @@ import (
 )
 
 type LogEntry struct {
-	Index   uint64
-	Term    uint64
+	Index   int64
+	Term    int64
 	Command []helper.Command
 }
 
+func NewLogEntry() *LogEntry {
+	return &LogEntry{}
+}
+
+func (l *LogEntry) CreateLogEntry(index, term int64, cmd *helper.Command) LogEntry {
+	logEntry := LogEntry{
+		Index:   index,
+		Term:    term,
+		Command: append([]helper.Command{*cmd}, *cmd),
+	}
+	return logEntry
+}
 
 func EncodeLog(l LogEntry) ([]byte, error) {
 	jsonByte, err := json.Marshal(l)
@@ -23,7 +35,6 @@ func EncodeLog(l LogEntry) ([]byte, error) {
 	return jsonByte, nil
 }
 
-
 func DecodeLog(data []byte) (LogEntry, error) {
 	var l LogEntry
 	err := json.Unmarshal(data, &l)
@@ -32,7 +43,6 @@ func DecodeLog(data []byte) (LogEntry, error) {
 	}
 	return l, nil
 }
-
 
 type AppendRequest struct {
 	Term         int
@@ -47,7 +57,6 @@ type AppendResponse struct {
 	Success bool
 }
 
-
 func Append(c *fiber.Ctx) error {
 	return nil
 }
@@ -55,4 +64,3 @@ func Append(c *fiber.Ctx) error {
 func Vote(c *fiber.Ctx) error {
 	return nil
 }
-``

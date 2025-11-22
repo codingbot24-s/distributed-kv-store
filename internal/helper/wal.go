@@ -11,7 +11,9 @@ import (
 )
 
 type Wal struct {
-	f *os.File
+	f     *os.File
+	Index int64
+	Term  int64
 }
 
 var defaultWal *Wal
@@ -42,9 +44,13 @@ func (w *Wal) Close() error {
 	return nil
 }
 
+// TODO: change to add a log entry
 func (w *Wal) Append(data []byte) error {
+	//TODO: error in checksum because sum is different with only payload we need tp pass index and current term in byte so checksum will pass
 	sum := crc32.Checksum(data, crc32.MakeTable(crc32.Castagnoli))
-	line := fmt.Sprintf("[length: %d] [checksum: %d] [paylaod: %s] \n", len(data), sum, string(data))
+
+	line := fmt.Sprintf("[length: %d] [checksum: %d] [paylaod: Index: %d, Term: %d, %s] \n", len(data), sum,
+		w.Index, w.Term, string(data))
 	_, err := w.f.Write([]byte(line))
 	if err != nil {
 		return fmt.Errorf("error writing to the file: %w", err)
@@ -53,12 +59,20 @@ func (w *Wal) Append(data []byte) error {
 	if err != nil {
 		return fmt.Errorf("error syncing the file: %w", err)
 	}
-
+	w.Index++
 	return nil
 }
 
+func (w *Wal) getTerm() int64 {
+	return w.Term
+}
+
+func (w *Wal) getIndex() int64 {
+	return w.Index
+}
+
 // do we need to return whole entry can we just return the payload and make
-// TODO: before read would return the whole entry but now it is returning just the command
+// TODO: before read would return the whole entry but now it is returning just theand
 // not len and sum
 func (w *Wal) Read() ([][]byte, error) {
 	if w.f == nil {
@@ -102,6 +116,7 @@ func (w *Wal) Read() ([][]byte, error) {
 
 		payload := matches[3]
 
+		fmt.Printf("payload is %s\n", payload)
 		// compute new checksum
 		computedChecksum := crc32.Checksum([]byte(payload), crc32.MakeTable(crc32.Castagnoli))
 
