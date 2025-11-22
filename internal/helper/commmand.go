@@ -3,8 +3,6 @@ package helper
 import (
 	"encoding/json"
 	"fmt"
-
-	"github.com/codingbot24-s/distributed-kv-store/internal/raft"
 )
 
 type Command struct {
@@ -34,9 +32,12 @@ func ApplyCommand(cmd *Command) error {
 	// append to log file
 	index := w.Index
 	term := w.Term
-	l := raft.NewLogEntry()
+	l := NewLogEntry()
+	// clear here
 	logEntry := l.CreateLogEntry(index, term, cmd)
-	byteLog, err := raft.EncodeLog(logEntry)
+	fmt.Printf("logEntry is %s\n", logEntry)
+	byteLog, err := EncodeLog(logEntry)
+	fmt.Printf("byteLog is %s\n", byteLog)
 	if err != nil {
 		return fmt.Errorf("error encoding log: %w", err)
 	}
@@ -44,7 +45,8 @@ func ApplyCommand(cmd *Command) error {
 	if err != nil {
 		return fmt.Errorf("error appending into the file: %w", err)
 	}
-	var logEntryStruct raft.LogEntry
+	// we need to include raft entry here but importing will createcyclic import
+	var logEntryStruct LogEntry
 	// unmarshall json byte
 	err = json.Unmarshal(byteLog, &logEntryStruct)
 	if err != nil {
@@ -81,4 +83,41 @@ func DecodeCommand(data []byte) (*Command, error) {
 		return nil, fmt.Errorf("error decoding the command: %w", err)
 	}
 	return &cmd, nil
+}
+
+// LOG ENTRY STRUCTER AND ITS METHOD
+type LogEntry struct {
+	Index   int64
+	Term    int64
+	Command []Command
+}
+
+func NewLogEntry() *LogEntry {
+	return &LogEntry{}
+}
+
+func (l *LogEntry) CreateLogEntry(index, term int64, cmd *Command) LogEntry {
+	logEntry := LogEntry{
+		Index:   index,
+		Term:    term,
+		Command: []Command{*cmd},
+	}
+	return logEntry
+}
+
+func EncodeLog(l LogEntry) ([]byte, error) {
+	jsonByte, err := json.Marshal(l)
+	if err != nil {
+		return nil, fmt.Errorf("error marshalling log: %v", err)
+	}
+	return jsonByte, nil
+}
+
+func DecodeLog(data []byte) (LogEntry, error) {
+	var l LogEntry
+	err := json.Unmarshal(data, &l)
+	if err != nil {
+		return l, fmt.Errorf("error decoding log entry: %w", err)
+	}
+	return l, nil
 }

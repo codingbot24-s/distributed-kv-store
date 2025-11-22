@@ -48,9 +48,9 @@ func (w *Wal) Close() error {
 func (w *Wal) Append(data []byte) error {
 	//TODO: error in checksum because sum is different with only payload we need tp pass index and current term in byte so checksum will pass
 	sum := crc32.Checksum(data, crc32.MakeTable(crc32.Castagnoli))
-
-	line := fmt.Sprintf("[length: %d] [checksum: %d] [paylaod: Index: %d, Term: %d, %s] \n", len(data), sum,
-		w.Index, w.Term, string(data))
+	fmt.Printf("data is %s\n", string(data))
+	line := fmt.Sprintf("[length: %d] [checksum: %d] [paylaod: %s] \n", len(data), sum,
+		string(data))
 	_, err := w.f.Write([]byte(line))
 	if err != nil {
 		return fmt.Errorf("error writing to the file: %w", err)
