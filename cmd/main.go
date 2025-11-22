@@ -13,21 +13,10 @@ func main() {
 		log.Fatalf("error creating wal: %v", err)
 	}
 	helper.NewEngine()
-	// start the read
-	//err = helper.BuildState()
-	//if err != nil {
-	//	log.Fatalf("error building state: %v", err)
-	//}
+	//TODO: start the read
+	err = helper.BuildState()
+	if err != nil {
+		log.Fatalf("error building state: %v", err)
+	}
 	router.StartRouter()
-
-	//c := helper.Command{
-	//	OP:    "set",
-	//	Key:   "key",
-	//	Value: "value",
-	//}
-	//err = helper.ApplyCommand(w, e, &c)
-	//if err != nil {
-	//	panic(err)
-	//}
-
 }

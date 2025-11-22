@@ -1,1 +1,1 @@
-[length: 40] [checksum: 3837768375] [paylaod: Index: 1, Term: 1, {"OP":"set","Key":"name","Value":"John"}] 
+[length: 73] [checksum: 315309743] [paylaod: {"Index":0,"Term":0,"Command":[{"OP":"set","Key":"name","Value":"John"}]}] 
