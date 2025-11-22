@@ -48,7 +48,7 @@ func (w *Wal) Close() error {
 func (w *Wal) Append(data []byte) error {
 	//TODO: error in checksum because sum is different with only payload we need tp pass index and current term in byte so checksum will pass
 	sum := crc32.Checksum(data, crc32.MakeTable(crc32.Castagnoli))
-	fmt.Printf("data is %s\n", string(data))
+
 	line := fmt.Sprintf("[length: %d] [checksum: %d] [paylaod: %s] \n", len(data), sum,
 		string(data))
 	_, err := w.f.Write([]byte(line))
@@ -113,10 +113,9 @@ func (w *Wal) Read() ([][]byte, error) {
 		if err != nil {
 			return nil, fmt.Errorf("invalid checksum value: %s", matches[2])
 		}
-
+		// TODO: read error is here we need to get only command not term and index
 		payload := matches[3]
 
-		fmt.Printf("payload is %s\n", payload)
 		// compute new checksum
 		computedChecksum := crc32.Checksum([]byte(payload), crc32.MakeTable(crc32.Castagnoli))
 

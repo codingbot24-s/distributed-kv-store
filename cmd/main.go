@@ -13,10 +13,10 @@ func main() {
 		log.Fatalf("error creating wal: %v", err)
 	}
 	helper.NewEngine()
-	//TODO: start the read
-	err = helper.BuildState()
-	if err != nil {
-		log.Fatalf("error building state: %v", err)
-	}
+	////TODO: start the read
+	//err = helper.BuildState()
+	//if err != nil {
+	//	log.Fatalf("error building state: %v", err)
+	//}
 	router.StartRouter()
 }
