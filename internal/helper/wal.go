@@ -114,6 +114,7 @@ func (w *Wal) Read() ([][]byte, error) {
 			return nil, fmt.Errorf("invalid checksum value: %s", matches[2])
 		}
 		// TODO: read error is here we need to get only command not term and index
+		// we can split by command and then try to compute ?
 		payload := matches[3]
 
 		// compute new checksum
