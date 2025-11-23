@@ -18,7 +18,7 @@ func BuildState() error {
 	for _, entry := range entries {
 		
 		//TODO: is there a better way to get the command struct
-		d := entry[46 : len(entry)-3]
+		d := entry[77 : len(entry)-5]
 		fmt.Println(string(d))
 		c, err := DecodeCommand(d)
 		if err != nil {

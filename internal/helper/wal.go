@@ -47,10 +47,10 @@ func (w *Wal) Close() error {
 // TODO: change to add a log entry
 func (w *Wal) Append(data []byte) error {
 	//TODO: error in checksum because sum is different with only payload we need tp pass index and current term in byte so checksum will pass
-	fmt.Printf("data is %s",string(data))
-	sum := crc32.Checksum(data, crc32.MakeTable(crc32.Castagnoli))
+	// extra two bracet will fail the hash check in read
+	sum := crc32.Checksum(data[:len(data)-2], crc32.MakeTable(crc32.Castagnoli))
 
-	line := fmt.Sprintf("[length: %d] [checksum: %d] [paylaod: %s] \n", len(data), sum,string(data))
+	line := fmt.Sprintf("[length: %d] [checksum: %d] [paylaod: %s] \n", len(data[:len(data)-2]), sum,string(data))
 	_, err := w.f.Write([]byte(line))
 	if err != nil {
 		return fmt.Errorf("error writing to the file: %w", err)
