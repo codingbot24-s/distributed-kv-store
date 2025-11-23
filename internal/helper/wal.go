@@ -47,10 +47,10 @@ func (w *Wal) Close() error {
 // TODO: change to add a log entry
 func (w *Wal) Append(data []byte) error {
 	//TODO: error in checksum because sum is different with only payload we need tp pass index and current term in byte so checksum will pass
+	fmt.Printf("data is %s",string(data))
 	sum := crc32.Checksum(data, crc32.MakeTable(crc32.Castagnoli))
 
-	line := fmt.Sprintf("[length: %d] [checksum: %d] [paylaod: %s] \n", len(data), sum,
-		string(data))
+	line := fmt.Sprintf("[length: %d] [checksum: %d] [paylaod: %s] \n", len(data), sum,string(data))
 	_, err := w.f.Write([]byte(line))
 	if err != nil {
 		return fmt.Errorf("error writing to the file: %w", err)
@@ -63,11 +63,11 @@ func (w *Wal) Append(data []byte) error {
 	return nil
 }
 
-func (w *Wal) getTerm() int64 {
+func (w *Wal) GetTerm() int64 {
 	return w.Term
 }
 
-func (w *Wal) getIndex() int64 {
+func (w *Wal) GetIndex() int64 {
 	return w.Index
 }
 
@@ -115,8 +115,10 @@ func (w *Wal) Read() ([][]byte, error) {
 		}
 		// TODO: read error is here we need to get only command not term and index
 		// we can split by command and then try to compute ?
+		
 		payload := matches[3]
-
+		fmt.Printf("payload is %s",string(payload))
+		// paylaodtocompute := strings.Split(payload)
 		// compute new checksum
 		computedChecksum := crc32.Checksum([]byte(payload), crc32.MakeTable(crc32.Castagnoli))
 

@@ -14,9 +14,8 @@ func main() {
 	}
 	helper.NewEngine()
 	////TODO: start the read
-	//err = helper.BuildState()
-	//if err != nil {
-	//	log.Fatalf("error building state: %v", err)
-	//}
+	// err = helper.BuildState()
+	// if err != nil {
+	
 	router.StartRouter()
 }

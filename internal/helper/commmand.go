@@ -37,7 +37,7 @@ func ApplyCommand(cmd *Command) error {
 	logEntry := l.CreateLogEntry(index, term, cmd)
 
 	byteLog, err := EncodeLog(logEntry)
-
+	fmt.Printf("Byte log is %s",string(byteLog))
 	if err != nil {
 		return fmt.Errorf("error encoding log: %w", err)
 	}
