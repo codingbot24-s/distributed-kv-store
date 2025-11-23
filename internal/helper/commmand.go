@@ -24,7 +24,6 @@ func ApplyCommand(cmd *Command) error {
         return fmt.Errorf("error getting wal: %w", err)
     }
 
-    // Create log entry (wraps cmd in a slice internally)
     l := NewLogEntry()
     logEntry := l.CreateLogEntry(w.Index, w.Term, cmd)
 
@@ -46,7 +45,6 @@ func ApplyCommand(cmd *Command) error {
         return fmt.Errorf("error getting engine: %w", err)
     }
 
-    // Apply each command (currently just one)
     for _, c := range logEntry.Command {
         switch c.OP {
         case "set":
@@ -59,7 +57,7 @@ func ApplyCommand(cmd *Command) error {
     return nil
 }
 
-func encode(cmd *Command) ([]byte, error) {
+func Encode(cmd *Command) ([]byte, error) {
 	jsonByte, err := json.Marshal(*cmd)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling in the json byte %w", err)

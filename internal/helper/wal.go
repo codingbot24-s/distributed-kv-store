@@ -25,7 +25,7 @@ func NewWal(path string) error {
 		return fmt.Errorf("error opening the file: %w", err)
 	}
 	// store the created WAL in the package-level variable so GetWal can return it
-	defaultWal = &Wal{f: f}
+	defaultWal = &Wal{f: f,Index:1,Term: 0}
 	return nil
 }
 
@@ -46,13 +46,11 @@ func (w *Wal) Close() error {
 }
 // cheksum whole data before we are computing the checksum of only command now whole payloa so read and write dosnt generate the diffrent checksum
 func (w *Wal) Append(data []byte) error {
-	// Remove the slicing - checksum the entire JSON payload
 	sum := crc32.Checksum(data, crc32.MakeTable(crc32.Castagnoli))
 
-	// Fix the typo: paylaod -> payload
 	line := fmt.Sprintf("[length: %d] [checksum: %d] [payload: %s]\n",
 		len(data), sum, string(data))
-
+	w.Index+=1
 	_, err := w.f.Write([]byte(line))
 	if err != nil {
 		return fmt.Errorf("error writing to the file: %w", err)
@@ -62,17 +60,16 @@ func (w *Wal) Append(data []byte) error {
 	if err != nil {
 		return fmt.Errorf("error syncing the file: %w", err)
 	}
-
-	w.Index++
+	
 	return nil
 }
 
-func (w *Wal) GetTerm() int64 {
-	return w.Term
+func (w *Wal) GetTerm() *int64 {
+	return &w.Term
 }
 
-func (w *Wal) GetIndex() int64 {
-	return w.Index
+func (w *Wal) GetIndex() *int64 {
+	return &w.Index
 }
 
 
@@ -87,7 +84,6 @@ func (w *Wal) Read() ([]*LogEntry, error) {
 		return nil, fmt.Errorf("error seeking file: %w", err)
 	}
 
-	// Match both "payload" and "paylaod" for compatibility
 	re := regexp.MustCompile(`\[length: (\d+)\] \[checksum: (\d+)\] \[pay(?:loa|la)d: (.*?)\]`)
 
 	var entries []*LogEntry 
