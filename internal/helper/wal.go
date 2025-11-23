@@ -25,7 +25,7 @@ func NewWal(path string) error {
 		return fmt.Errorf("error opening the file: %w", err)
 	}
 	// store the created WAL in the package-level variable so GetWal can return it
-	defaultWal = &Wal{f: f,Index:1,Term: 0}
+	defaultWal = &Wal{f: f,Index:1,Term: 1}
 	return nil
 }
 
