@@ -26,7 +26,7 @@ func ApplyCommand(cmd *Command) error {
 
     l := NewLogEntry()
     logEntry := l.CreateLogEntry(w.Index, w.Term, cmd)
-
+	fmt.Println(logEntry)
     // Encode to JSON bytes
     byteLog, err := EncodeLog(*logEntry)
     if err != nil {
@@ -44,16 +44,21 @@ func ApplyCommand(cmd *Command) error {
     if err != nil {
         return fmt.Errorf("error getting engine: %w", err)
     }
-
-    for _, c := range logEntry.Command {
-        switch c.OP {
-        case "set":
-            e.set(c.Key, c.Value)
-        default:
-            return fmt.Errorf("unknown command: %s", c.OP)
-        }
-    }
-
+	// fix thiss we dont need array of cmd in one logentry just one cmd
+    
+	// apply to engine	
+	switch logEntry.Command.OP {
+	case "set":
+		e.set(logEntry.Command.Key, logEntry.Command.Value)
+	case "delete":
+		e.Delete(logEntry.Command.Key)
+	case "get":
+		// Get operations typically don't modify state
+		// but you might want to handle them differently
+	default:
+		return fmt.Errorf("unknown command: %s", logEntry.Command.OP)
+	}
+	
     return nil
 }
 
@@ -75,23 +80,28 @@ func DecodeCommand(data []byte) (*Command, error) {
 }
 
 // LOG ENTRY STRUCTER AND ITS METHOD
+
+
 type LogEntry struct {
-	Index   int64
-	Term    int64
-	Command []Command
+	Index   int64  `json:"Index"`
+	Term    int64  `json:"Term"`
+	Command Command `json:"Command"` 
 }
 
+// CreateLogEntry helper to create a log entry
+func (l *LogEntry) CreateLogEntry(index, term int64, cmd *Command) *LogEntry {
+	return &LogEntry{
+		Index:   index,
+		Term:    term,
+		Command: *cmd, 
+	}
+}
 func NewLogEntry() *LogEntry {
 	return &LogEntry{}
 }
 
-func (l *LogEntry) CreateLogEntry(index, term int64, cmd *Command) *LogEntry {
-    return &LogEntry{
-        Index:   index,
-        Term:    term,
-        Command: []Command{*cmd}, 
-    }
-}
+// LogEntry represents a single WAL entry with one command
+
 
 func EncodeLog(l LogEntry) ([]byte, error) {
 	jsonByte, err := json.Marshal(l)
