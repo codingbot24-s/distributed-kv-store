@@ -2,6 +2,7 @@ package helper
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"hash/crc32"
 	"io"
@@ -43,22 +44,25 @@ func (w *Wal) Close() error {
 
 	return nil
 }
-
-// TODO: change to add a log entry
+// cheksum whole data before we are computing the checksum of only command now whole payloa so read and write dosnt generate the diffrent checksum
 func (w *Wal) Append(data []byte) error {
-	//TODO: error in checksum because sum is different with only payload we need tp pass index and current term in byte so checksum will pass
-	// extra two bracet will fail the hash check in read
-	sum := crc32.Checksum(data[:len(data)-2], crc32.MakeTable(crc32.Castagnoli))
+	// Remove the slicing - checksum the entire JSON payload
+	sum := crc32.Checksum(data, crc32.MakeTable(crc32.Castagnoli))
 
-	line := fmt.Sprintf("[length: %d] [checksum: %d] [paylaod: %s] \n", len(data[:len(data)-2]), sum,string(data))
+	// Fix the typo: paylaod -> payload
+	line := fmt.Sprintf("[length: %d] [checksum: %d] [payload: %s]\n",
+		len(data), sum, string(data))
+
 	_, err := w.f.Write([]byte(line))
 	if err != nil {
 		return fmt.Errorf("error writing to the file: %w", err)
 	}
+
 	err = w.f.Sync()
 	if err != nil {
 		return fmt.Errorf("error syncing the file: %w", err)
 	}
+
 	w.Index++
 	return nil
 }
@@ -71,35 +75,33 @@ func (w *Wal) GetIndex() int64 {
 	return w.Index
 }
 
-// do we need to return whole entry can we just return the payload and make
-// TODO: before read would return the whole entry but now it is returning just theand
-// not len and sum
-func (w *Wal) Read() ([][]byte, error) {
+
+func (w *Wal) Read() ([]*LogEntry, error) {
 	if w.f == nil {
 		return nil, fmt.Errorf("the file is not initialized")
 	}
-	reader := bufio.NewReader(w.f)
 
+	reader := bufio.NewReader(w.f)
 	_, err := w.f.Seek(0, 0)
 	if err != nil {
 		return nil, fmt.Errorf("error seeking file: %w", err)
 	}
 
-	// Compile regex once, not on every iteration
-	re := regexp.MustCompile(`\[length: (\d+)\] \[checksum: (\d+)\] \[paylaod: (.*?)\]`)
-	lineSlice := make([][]byte, 0)
+	// Match both "payload" and "paylaod" for compatibility
+	re := regexp.MustCompile(`\[length: (\d+)\] \[checksum: (\d+)\] \[pay(?:loa|la)d: (.*?)\]`)
+
+	var entries []*LogEntry 
+
 	for {
-		bline, err := reader.ReadBytes('\n')
-		if err != nil && err != io.EOF {
-			return nil, fmt.Errorf("error reading file: %w", err)
-		}
+		line, err := reader.ReadString('\n')
 		if err == io.EOF {
 			break
 		}
+		if err != nil {
+			return nil, fmt.Errorf("error reading file: %w", err)
+		}
 
-		line := string(bline)
 		matches := re.FindStringSubmatch(line)
-
 		if len(matches) != 4 {
 			return nil, fmt.Errorf("invalid log format: %s", line)
 		}
@@ -113,30 +115,29 @@ func (w *Wal) Read() ([][]byte, error) {
 		if err != nil {
 			return nil, fmt.Errorf("invalid checksum value: %s", matches[2])
 		}
-		// TODO: read error is here we need to get only command not term and index
-		// we can split by command and then try to compute ?
-		
-		payload := matches[3]
-		fmt.Printf("payload is %s",string(payload))
-		// paylaodtocompute := strings.Split(payload)
-		// compute new checksum
-		computedChecksum := crc32.Checksum([]byte(payload), crc32.MakeTable(crc32.Castagnoli))
 
-		// check
+		payload := []byte(matches[3])
+
+		// Verify checksum on the JSON payload
+		computedChecksum := crc32.Checksum(payload, crc32.MakeTable(crc32.Castagnoli))
 		if computedChecksum != uint32(storedChecksum) {
-			return nil, fmt.Errorf("checksum mismatch for payload '%s': expected %d, got %d",
-				payload, storedChecksum, computedChecksum)
+			return nil, fmt.Errorf("checksum mismatch: expected %d, got %d",
+				storedChecksum, computedChecksum)
 		}
 
 		if len(payload) != length {
-			return nil, fmt.Errorf("length mismatch for payload '%s': expected %d, got %d",
-				payload, length, len(payload))
+			return nil, fmt.Errorf("length mismatch: expected %d, got %d",
+				length, len(payload))
 		}
 
-		fmt.Printf(" Verified: [length: %d] [checksum: %d] [payload: %s]\n", length, computedChecksum, payload)
+		// Parse JSON into LogEntry struct
+		var logEntry LogEntry
+		if err := json.Unmarshal(payload, &logEntry); err != nil {
+			return nil, fmt.Errorf("error unmarshaling entry: %w", err)
+		}
 
-		lineSlice = append(lineSlice, bline)
+		entries = append(entries, &logEntry)
 	}
 
-	return lineSlice, nil
+	return entries, nil
 }

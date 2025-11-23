@@ -55,6 +55,31 @@ func (e *Engine) Apply(cmd *Command) error {
 	return nil
 }
 
+func (e *Engine) Replay(w *Wal) error {
+    entries, err := w.Read() 
+    if err != nil {
+        return fmt.Errorf("error reading WAL: %w", err)
+    }
+
+    for i, entry := range entries {
+		// loop over commands in entry
+        for j, cmd := range entry.Command {
+            switch cmd.OP {
+            case "set":
+                e.set(cmd.Key, cmd.Value)
+            case "delete":
+                e.Delete(cmd.Key)
+            default:
+                return fmt.Errorf("unknown command at entry %d, cmd %d: %s", 
+                    i, j, cmd.OP)
+            }
+        }
+    }
+
+    return nil
+}
+
+
 func (e *Engine) Check() {
 	fmt.Println("starting the check")
 	for k, v := range e.Data {

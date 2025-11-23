@@ -17,55 +17,46 @@ func NewCommand() *Command {
 
 // handler will call with command and this will append to the wal log file
 // return the encoded bytes of command
+
 func ApplyCommand(cmd *Command) error {
-	// encode the command in jsonByte
-	// encode directly in log entry
-	// b, err := encode(cmd)
-	//if err != nil {
-	//	return fmt.Errorf("error encoding command: %w", err)
-	//}
-	// will append the bytes into the wal file
-	w, err := GetWal()
-	if err != nil {
-		return fmt.Errorf("error getting wal: %w", err)
-	}
-	// append to log file
-	index := w.Index
-	term := w.Term
-	l := NewLogEntry()
-	// clear here
-	logEntry := l.CreateLogEntry(index, term, cmd)
+    w, err := GetWal()
+    if err != nil {
+        return fmt.Errorf("error getting wal: %w", err)
+    }
 
-	byteLog, err := EncodeLog(logEntry)
-	fmt.Printf("Byte log is %s",string(byteLog))
-	if err != nil {
-		return fmt.Errorf("error encoding log: %w", err)
-	}
-	err = w.Append(byteLog)
-	if err != nil {
-		return fmt.Errorf("error appending into the file: %w", err)
-	}
-	// we need to include raft entry here but importing will createcyclic import
-	var logEntryStruct LogEntry
-	// unmarshall json byte
-	err = json.Unmarshal(byteLog, &logEntryStruct)
-	if err != nil {
-		return fmt.Errorf("error decoding command: %w", err)
-	}
-	e, err := GetEngine()
-	if err != nil {
-		return fmt.Errorf("error getting engine: %w", err)
-	}
-	for _, cmd := range logEntryStruct.Command {
-		switch cmd.OP {
-		case "set":
-			e.set(cmd.Key, cmd.Value)
-		default:
-			return fmt.Errorf("unknown command: %s", cmd.OP)
-		}
+    // Create log entry (wraps cmd in a slice internally)
+    l := NewLogEntry()
+    logEntry := l.CreateLogEntry(w.Index, w.Term, cmd)
 
-	}
-	return nil
+    // Encode to JSON bytes
+    byteLog, err := EncodeLog(*logEntry)
+    if err != nil {
+        return fmt.Errorf("error encoding log: %w", err)
+    }
+
+    // Append to WAL file
+    err = w.Append(byteLog)
+    if err != nil {
+        return fmt.Errorf("error appending into the file: %w", err)
+    }
+
+    // Apply to engine
+    e, err := GetEngine()
+    if err != nil {
+        return fmt.Errorf("error getting engine: %w", err)
+    }
+
+    // Apply each command (currently just one)
+    for _, c := range logEntry.Command {
+        switch c.OP {
+        case "set":
+            e.set(c.Key, c.Value)
+        default:
+            return fmt.Errorf("unknown command: %s", c.OP)
+        }
+    }
+
+    return nil
 }
 
 func encode(cmd *Command) ([]byte, error) {
@@ -96,13 +87,12 @@ func NewLogEntry() *LogEntry {
 	return &LogEntry{}
 }
 
-func (l *LogEntry) CreateLogEntry(index, term int64, cmd *Command) LogEntry {
-	logEntry := LogEntry{
-		Index:   index,
-		Term:    term,
-		Command: []Command{*cmd},
-	}
-	return logEntry
+func (l *LogEntry) CreateLogEntry(index, term int64, cmd *Command) *LogEntry {
+    return &LogEntry{
+        Index:   index,
+        Term:    term,
+        Command: []Command{*cmd}, 
+    }
 }
 
 func EncodeLog(l LogEntry) ([]byte, error) {

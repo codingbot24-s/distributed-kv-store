@@ -13,10 +13,16 @@ func main() {
 		log.Fatalf("error creating wal: %v", err)
 	}
 	helper.NewEngine()
-	////TODO: start the read
-	err = helper.BuildState()
+	w,err := helper.GetWal()
 	if err != nil {
-		log.Fatalf("error building state: %v", err)
+		log.Fatalf("error getting wal: %v", err)
+	}		
+
+	e,err := helper.GetEngine()
+	if err != nil {
+		log.Fatalf("error getting engine : %v", err)
 	}
-	router.StartRouter()
+	e.Replay(w)	
+		
+	router.StartRouter()	
 }
