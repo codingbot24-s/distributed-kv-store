@@ -23,6 +23,6 @@ func main() {
 		log.Fatalf("error getting engine : %v", err)
 	}
 	e.Replay(w)	
-		
+	e.Check()	
 	router.StartRouter()	
 }

@@ -15,6 +15,9 @@ func NewCommand() *Command {
 	return &Command{}
 }
 
+
+var raftLog []LogEntry
+
 // handler will call with command and this will append to the wal log file
 // return the encoded bytes of command
 
@@ -38,28 +41,23 @@ func ApplyCommand(cmd *Command) error {
     if err != nil {
         return fmt.Errorf("error appending into the file: %w", err)
     }
-
+	raftLog = append(raftLog, *logEntry)
     // Apply to engine
     e, err := GetEngine()
     if err != nil {
         return fmt.Errorf("error getting engine: %w", err)
     }
-	// fix thiss we dont need array of cmd in one logentry just one cmd
-    
-	// apply to engine	
-	switch logEntry.Command.OP {
+	// after write we need to apply into the engine
+    switch logEntry.Command.OP {
 	case "set":
 		e.set(logEntry.Command.Key, logEntry.Command.Value)
 	case "delete":
 		e.Delete(logEntry.Command.Key)
 	case "get":
-		// Get operations typically don't modify state
-		// but you might want to handle them differently
 	default:
 		return fmt.Errorf("unknown command: %s", logEntry.Command.OP)
 	}
-	
-    return nil
+	return nil
 }
 
 func Encode(cmd *Command) ([]byte, error) {
@@ -99,10 +97,6 @@ func (l *LogEntry) CreateLogEntry(index, term int64, cmd *Command) *LogEntry {
 func NewLogEntry() *LogEntry {
 	return &LogEntry{}
 }
-
-// LogEntry represents a single WAL entry with one command
-
-
 func EncodeLog(l LogEntry) ([]byte, error) {
 	jsonByte, err := json.Marshal(l)
 	if err != nil {
